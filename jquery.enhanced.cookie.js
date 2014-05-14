@@ -3,6 +3,8 @@
  *
  * Author: Frederick Giasson
  * 
+ * 	Updated: Tom Taylor: http://tommytaylor.co.uk
+ * 
  * Copyright (c) 2012 Structured Dynamics LLC 
  * Dual licensed under the MIT and GPL licenses:
  * http://www.opensource.org/licenses/mit-license.php
@@ -205,6 +207,9 @@ jQuery.cookie = function (key, value, options) {
  * The chunkedcookie function comes from the jQuery Cookie plugin available here:
  * 
  *   https://github.com/carhartl/jquery-cookie
+ * 	
+ * 	*Updated to use Improved jQuery.cookie plugin by @mathias: http://mths.be/cookie
+ * 		(https://gist.github.com/mathiasbynens/399854)
  *
  * Copyright (c) 2010 Klaus Hartl (stilbuero.de)
  * Dual licensed under the MIT and GPL licenses:
