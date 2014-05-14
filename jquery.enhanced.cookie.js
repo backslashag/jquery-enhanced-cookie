@@ -212,35 +212,36 @@ jQuery.cookie = function (key, value, options) {
  * http://www.gnu.org/licenses/gpl.html
  *
  */
-jQuery.chunkedcookie = function (key, value, options) {
-
-    // key and at least value given, set cookie...
-    if (arguments.length > 1 && String(value) !== "[object Object]") {
-        options = jQuery.extend({}, options);
-
-        if (value === null || value === undefined) {
-            options.expires = -1;
-        }
-
-        if (typeof options.expires === 'number') {
-            var days = options.expires, t = options.expires = new Date();
-            t.setDate(t.getDate() + days);
-        }
-
-        value = String(value);
-
-        return (document.cookie = [
-            encodeURIComponent(key), '=',
-            options.raw ? value : encodeURIComponent(value),
-            options.expires ? '; expires=' + options.expires.toUTCString() : '', // use expires attribute, max-age is not supported by IE
-            options.path ? '; path=' + options.path : '',
-            options.domain ? '; domain=' + options.domain : '',
-            options.secure ? '; secure' : ''
-        ].join(''));
-    }
-
-    // key and possibly options given, get cookie...
-    options = value || {};
-    var result, decode = options.raw ? function (s) { return s; } : decodeURIComponent;
-    return (result = new RegExp('(?:^|; )' + encodeURIComponent(key) + '=([^;]*)').exec(document.cookie)) ? decode(result[1]) : null;
-};
+jQuery.chunkedcookie = function(name, value, options) {
+		var expires = '',
+		    date,
+		    match;
+		if (typeof value != 'undefined') { // name and value given, set cookie
+			options || (options = {});
+			if (!value) {
+				value = '';
+				options.expires = -1;
+			}
+			if (options.expires && (typeof options.expires == 'number' || options.expires.toUTCString)) {
+				date = new Date;
+				if (typeof options.expires == 'number') {
+					date.setTime(+new Date() + (options.expires * 864e5)); // 86,400,000 ms = 1 day
+				} else {
+					date = options.expires;
+				}
+				expires = '; expires=' + date.toUTCString(); // use expires attribute, max-age is not supported by IE
+			}
+			document.cookie = [
+				name,
+				'=',
+				encodeURIComponent(value),
+				expires,
+				options.path ? '; path=' + options.path : '',
+				options.domain ? '; domain=' + options.domain : '', 
+				options.secure ? '; secure' : ''
+			].join('');
+		} else { // only name given, get cookie
+			match = document.cookie.match(new RegExp('(?:^|;)\\s?' + name.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1') + '=(.*?)(?:;|$)', 'i'));
+			return match && unescape(match[1]);
+		};
+	};
