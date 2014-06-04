@@ -119,7 +119,7 @@ Now, let's see how to force reading the cookies by bypassing the localStorage me
 var value = $.cookie('my-cookie', {uls: 0});
 ```
 
-Note that if the cookie is not existing for a <code>key</code>, then the <code>$.cookie()</code> function will return <code>null</code>.
+Note that if the cookie is not existing for a <code>key</code>, then the <code>$.cookie()</code> function will return ~~<code>null</code>~~ <code>undefined</code> - just like the $.coookie plugin would.
 
 Using Limitations
 -----------------
