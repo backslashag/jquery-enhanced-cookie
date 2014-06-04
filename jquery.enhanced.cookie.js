@@ -121,6 +121,8 @@
 				return;
 			}
 			
+			s = {};
+			
 			s.u = g.u;
 			
 			if (o === s.u && v !== s.u) {
