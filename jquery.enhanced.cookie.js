@@ -1,252 +1,214 @@
 /**
- * jQuery Extended Cookie Plugin
- *
- * Author: Frederick Giasson
+ * jQuery Extended Cookie Plugin v1.1 (2014)
  * 
- * 	Updated: Tom Taylor: http://tommytaylor.co.uk
+ *	Rewritten plugin to support better integration with $.cookie and $.super_cookie plugins and options
+ *  Removed console guff and optimised code to reduce size further
+ *	Tom Taylor - 04/06/14 - http://tommytaylor.co.uk
  * 
- * Copyright (c) 2012 Structured Dynamics LLC 
+ *  Based on the original https://github.com/fgiasson/jquery-enhanced-cookie by Frederick Giasson (2012)
+ *  Most if not all of this version of the plugin should be backwards compatable! (*maybe)
+ * 
  * Dual licensed under the MIT and GPL licenses:
  * http://www.opensource.org/licenses/mit-license.php
  * http://www.gnu.org/licenses/gpl.html
  *
  */
-
-jQuery.cookie = function (key, value, options) {
-  
-  // Check if localStorage of HTML5 exists in this browser
-  var isStorageAvailable = false;
-  if ("localStorage" in window)
-  {
-    try {
-      window.localStorage.setItem("isStorageAvailable", "true");
-      isStorageAvailable = true;
-      window.localStorage.removeItem("isStorageAvailable", "true");
-    } catch (PrivateBrowsingError) {
-      // iOS Private Browsing mode will throw a "QUOTA_EXCEEDED_ERRROR DOM Exception 22" error
-    }
-  }
-  
-  // Check if the user wants to create or delete a cookie.
-  if (arguments.length > 1 && String(value) !== "[object Object]") 
-  {
-    options = jQuery.extend({}, options);
-    
-    // Set the default value of the maxChunkSize option if it is not yet defined.
-    if(options.maxChunkSize == undefined)
-    {
-      options.maxChunkSize = 3000;
-    }
-    
-    // Set the default value of the maxNumberOfCookies option if it is not yet defined.
-    if(options.maxNumberOfCookies == undefined)
-    {
-      options.maxNumberOfCookies = 20;
-    }
-    
-    // Set the usage of the local storage to true by default
-    if(options.useLocalStorage == undefined)
-    {
-      options.useLocalStorage = true;
-    }    
-    
-    // Check if the user tries to delete the cookie
-    if(value === null || value === undefined)
-    {
-      // If the localStorage is available, and if the user requested its usage, then we first
-      // try to delete it from that place
-      if(options.useLocalStorage && isStorageAvailable != false)
-      {
-        localStorage.removeItem(key);
-      }
-      
-      // Even if the localStora was used, we try to remove some possible old cookies
-      // Delete all possible chunks for that cookie
-      for(var i = 0; i < options.maxNumberOfCookies; i++)
-      {
-        if(i == 0)
-        {
-          // The first chunk doesn't have the chunk indicator "---"
-          var exists = $.chunkedcookie(key);
-        }
-        else
-        {
-          var exists = $.chunkedcookie(key + "---" + i);
-        }
-        
-        if(exists != null)
-        {
-          $.chunkedcookie(key + "---" + i, null, options);
-        }
-        else
-        {
-          break;
-        }
-      }    
-    }  
-    else
-    {
-      // If the localStorage is available, and if the user requested its usage, 
-      // then we create that value in the localStorage of the browser (and not in a cookie)
-      if(options.useLocalStorage && isStorageAvailable != false)
-      {
-        localStorage.setItem(key, value);
-      }
-      else
-      {
-        // The user tries to create a new cookie
-        
-        // Chunk the input content
-        var exp = new RegExp(".{1,"+options.maxChunkSize+"}","g");
-
-        if(value.match != undefined)
-        {
-          var chunks = value.match(exp);
-          
-          // Create one cookie per chunk
-          for(var i = 0; i < chunks.length; i++)
-          {
-            if(i == 0)
-            {
-              $.chunkedcookie(key, chunks[i], options);
-            }
-            else
-            {
-              $.chunkedcookie(key + "---" + i, chunks[i], options);
-            }
-          }       
-        }
-        else
-        {
-          // The value is probably a number, so we add it to a single cookie
-          $.chunkedcookie(key, value, options); 
-        }      
-      }      
-    }
-    
-    return(null);
-  }
-
-  // Check if options have been given for a cookie retreival operation  
-  if(options == undefined) 
-  {
-    var options;
-    
-    if(arguments.length > 1 && String(value) === "[object Object]")
-    {
-      options = value;
-    }
-    else
-    {
-      options = {};
-    }
-    
-    if(options.maxNumberOfCookies == undefined)
-    {
-      options.maxNumberOfCookies = 20;
-    }    
-    
-    if(options.useLocalStorage == undefined)
-    {
-      options.useLocalStorage = true;
-    }    
-  }
-
-  // If localStorage is available, we first check if there exists a value for that name.
-  // If no value exists in the localStorage, then we continue by checking in the cookies
-  // This second checkup is needed in case that a cookie has been created in the past, 
-  // using the old cookie jQuery plugin.
-  if(isStorageAvailable != false)
-  {
-    var value = localStorage.getItem(key);
-    
-    if(value != undefined && value != null)
-    {
-      return(value); 
-    }    
-  }
-
-  var value = "";
-  
-  // The user tries to get the value of a cookie
-  for(var i = 0; i < options.maxNumberOfCookies; i++)
-  {
-    // Check if the next chunk exists in the browser
-    if(i == 0)
-    {
-      var val = $.chunkedcookie(key);  
-    }
-    else
-    {
-      var val = $.chunkedcookie(key + "---" + i);
-    }
-    
-    // Append the value
-    if(val != null)
-    {
-      value += val;
-    }
-    else
-    {
-      // If the value is null, and we are looking at the first chunk, then
-      // it means that the cookie simply doesn't exist
-      if(i == 0)
-      {
-        return(null);
-      }
-      
-      break;
-    }
-  } 
-  
-  // Return the entire content from all the cookies that may have been used for that value.
-  return(value);  
-};
-
-/**
- * The chunkedcookie function comes from the jQuery Cookie plugin available here:
- * 
- *   https://github.com/carhartl/jquery-cookie
- * 	
- * 	*Updated to use Improved jQuery.cookie plugin by @mathias: http://mths.be/cookie
- * 		(https://gist.github.com/mathiasbynens/399854)
- *
- * Copyright (c) 2010 Klaus Hartl (stilbuero.de)
- * Dual licensed under the MIT and GPL licenses:
- * http://www.opensource.org/licenses/mit-license.php
- * http://www.gnu.org/licenses/gpl.html
- *
- */
-jQuery.chunkedcookie = function(name, value, options) {
-		var expires = '',
-		    date,
-		    match;
-		if (typeof value != 'undefined') { // name and value given, set cookie
-			options || (options = {});
-			if (!value) {
-				value = '';
-				options.expires = -1;
-			}
-			if (options.expires && (typeof options.expires == 'number' || options.expires.toUTCString)) {
-				date = new Date;
-				if (typeof options.expires == 'number') {
-					date.setTime(+new Date() + (options.expires * 864e5)); // 86,400,000 ms = 1 day
-				} else {
-					date = options.expires;
+;(function (factory) {
+	if (typeof define === 'function' && define.amd) {
+		// AMD
+		define(['jquery'], factory);
+	} else if (typeof exports === 'object') {
+		// CommonJS
+		factory(require('jquery'));
+	} else {
+		// Browser globals
+		factory(jQuery);
+	}
+}(function ($) {
+    var w = window, s = {}, g = {
+			ls: 0, 
+			ss: 0, 
+			jse: w.JSON && w.JSON.parse, 
+			u: undefined
+		},
+		encode = function(s) {
+			return config.raw ? s : encodeURIComponent(s);
+		},
+		decode = function(s) {
+			return config.raw ? s : decodeURIComponent(s);
+		},
+		starse = function(v,m) {
+			return (g.jse && config.json ? (m ? encode(w.JSON.stringify(v)) : decode(w.JSON.parse(v))) : String(v));
+		},
+		imp = {
+			read: {
+				storage : function(k) {
+					if (g.ls||g.ss) {
+						var cs = (k in g.ls? g.ls : (k in g.ss ? g.ss : 0));
+						if (cs) {
+							s.v = cs.getItem(decode(k))
+							if (s.v !== s.u && s.v !== null) {
+								return(starse(s.v,0)); 
+							}  
+						}							
+					}
+				},
+				cookie : function(k) {
+					if ((!s.st || !s.o.uls || s.st && s.o.ucc) && $.cookie) {
+						var v = "",
+							n = s.o.mnc;
+						for (i = 0; i < n; i++) {
+							v = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''));
+							if (v !== s.u) {
+								s.v += v;
+							} else {
+								if(i === 0) {
+									return(s.u);
+								}
+								break;
+							}
+						}
+					}
 				}
-				expires = '; expires=' + date.toUTCString(); // use expires attribute, max-age is not supported by IE
+			},
+			add : {
+				storage : function(k, v) {
+					if (s.o.uls && s.st) {
+						s.d = starse(v,1);
+						s.st.setItem(encode(k), s.d);
+					} 
+				},
+				cookie : function(k, v) {
+					if ($.cCookie) {
+						var vm = v.match(new RegExp(".{1,"+s.o.mcs+"}","g"));
+						if (vm !== s.u) {
+							var n = vm.length;
+							for (i = 0; i < n; i++) {
+								s.d = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''), vm[i], s.o);
+							}
+						} else {
+							s.d = $.cCookie(k, v, s.o); 
+						}      
+					} 		
+				}
+			},
+			remove : {
+				storage : function(k) {
+					if (s.st && k in s.st) {
+						s.st.removeItem(decode(k));
+					}
+				},
+				cookie : function(k) {
+					if ((!s.st || !s.o.uls || s.st && s.o.ucc) && $.cCookie) {
+						var o = $.extend(1, s.o, { expires: -1 }),
+							n = s.o.mnc,tc; 
+						for (i = 0; i < n; i++) {
+							tc = k + (i !== 0 ? o.cpf + i : '');
+							
+							if ($.cCookie(tc) !== s.u) {
+								$.cCookie(tc, null, o);
+							} else {
+								break;
+							}
+						}    
+					}
+				}
 			}
-			document.cookie = [
-				name,
-				'=',
-				encodeURIComponent(value),
-				expires,
-				options.path ? '; path=' + options.path : '',
-				options.domain ? '; domain=' + options.domain : '', 
-				options.secure ? '; secure' : ''
-			].join('');
-		} else { // only name given, get cookie
-			match = document.cookie.match(new RegExp('(?:^|;)\\s?' + name.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1') + '=(.*?)(?:;|$)', 'i'));
-			return match && unescape(match[1]);
+		},
+		config = $.enhancedCookie = function(k, v, o) {
+		
+			if (!arguments.length > 0 || $.isFunction(v)) {
+				return;
+			}
+			
+			s.u = g.u;
+			
+			if (o === s.u && v !== s.u) {
+				o = v;
+			}
+
+			s.o = $.extend({}, config.defaults, $.extend(1, config.options, $.extend(1, config, o))) || {}; //get default options, and set overrides
+			
+			s.st = (s.o.expires !== s.u ? g.ls : g.ss); //switch local storage type, regardless of state
+
+			
+			if (String(v) !== "[object Object]" && v !== s.u) {// set or remove data
+			
+				s.d = null;
+				
+				if (v === null || v === s.u) {
+					imp.remove.storage(k);
+					imp.remove.cookie(k);
+				} else {
+					if (s.o.uls && s.st) {
+						imp.add.storage(k, v);
+						if (s.o.ucc) {
+							imp.remove.cookie(k);
+						}
+					} else {
+						imp.add.cookie(k, v);
+					}
+				}
+
+				return(s.d);
+				
+			} else {// retrieve data
+			
+				imp.read.storage(k);
+				imp.read.cookie(k);
+
+				// Return the entire content from all the cookies that may have been used for that value.
+				return(s.v);
+			}
+			
 		};
+
+	config.defaults = {
+		// Set the default value (3000) of the maxChunkSize (mcs) option, set average for all browsers (see http://browsercookielimits.x64.me/).
+		'mcs' : 3000,
+		// Set the default value (20) of the maxNumCookies (mnc) option, set average for all browsers, IE8+ set to 30 or 50+.
+		'mnc' : 20,
+		// Set the default postfix value ('-cc' followed by int) of cookie name when data is chunked into multiple cookies (eg: 'testDetails-cc1', etc).
+		'cpf' : '-cc'
 	};
+	config.options = {
+		// Enable the use of Local/Session Storage (default: true - its 2014!), can be disabled if only enhanced cookie support is required.
+		'uls' : 1,
+		// Enable the chunked cookie reader and remover when Local/Session Storage is enabled (default: false) to work with older cookies as a temporary measure.
+		'ucc' : 0
+	};
+	
+	(function(w,g){
+		var s = [{n: 'local',t: 'ls'},{n: 'session',t: 'ss'}],
+			i,o,r,ts,l = s.length;
+		for (i = 0; i < l; i++) {
+			o = s[i];
+			r = o.n+"Storage";
+			if (!g[o.t] && r in w) {
+				try {
+					ts = w[r]; //lets reuse init of localStorage :)
+					ts.setItem(r, 1);
+					ts.removeItem(r);
+					g[o.t] = ts;
+				} catch (e) { //PrivateBrowsingError
+					// iOS Private Browsing mode will throw a "QUOTA_EXCEEDED_ERRROR DOM Exception 22" error
+				}
+			}
+		}
+	})(w,g);
+	
+	if ($.cookie) { //set cCookie as the cookie plugin if exists, as we'll replace cookie with enhancedCookie ;)
+		$.cCookie = (function($){
+			return $.cookie;
+		}($));
+		$.cookie = $.extend(1, $.cookie, $.enhancedCookie);
+		$.cookie = $.enhancedCookie;
+		
+		if ($.removeCookie) {
+			$.removeCookie = function(k, o) {
+				return $.cookie(k, null, o || {expires: -1});
+			};
+		}
+	}
+
+}));
