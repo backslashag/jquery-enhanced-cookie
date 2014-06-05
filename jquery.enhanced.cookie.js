@@ -1,8 +1,8 @@
 /**
- * jQuery Extended Cookie Plugin v1.1 (2014)
+ * jQuery Extended Cookie Plugin v1.2 (2014)
  * 
  *	Rewritten plugin to support better integration with $.cookie and $.super_cookie plugins and options
- *  Removed console guff and optimised code to reduce size further
+ *  	Removed console guff and optimised code to reduce size further
  *	Tom Taylor - 04/06/14 - http://tommytaylor.co.uk
  * 
  *  Based on the original https://github.com/fgiasson/jquery-enhanced-cookie by Frederick Giasson (2012)
@@ -54,12 +54,15 @@
 					}
 				},
 				cookie : function(k) {
-					if ((!s.st || !s.o.uls || s.st && s.o.ucc) && $.cookie) {
+					if ((!s.st || !s.o.uls || s.st && s.o.ucc) && $.cCookie) {
 						var v = "",
 							n = s.o.mnc;
 						for (i = 0; i < n; i++) {
 							v = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''));
 							if (v !== s.u) {
+								if(i === 0) {
+									s.v = "";
+								}
 								s.v += v;
 							} else {
 								if(i === 0) {
@@ -155,6 +158,8 @@
 				return(s.d);
 				
 			} else {// retrieve data
+			
+				s.v = null;
 			
 				imp.read.storage(k);
 				imp.read.cookie(k);
