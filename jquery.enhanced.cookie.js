@@ -1,5 +1,5 @@
 /**
- * jQuery Extended Cookie Plugin v1.2 (2014)
+ * jQuery Enhanced Cookie Plugin v1.2 (2014)
  * 
  *	Rewritten plugin to support better integration with $.cookie and $.super_cookie plugins and options
  *  	Removed console guff and optimised code to reduce size further
