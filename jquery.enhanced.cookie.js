@@ -1,8 +1,8 @@
 /**
- * jQuery Enhanced Cookie Plugin v1.2 (2014)
+ * jQuery Enhanced Cookie Plugin v1.2.1 (2014)
  * 
  *	Rewritten plugin to support better integration with $.cookie and $.super_cookie plugins and options
- *  	Removed console guff and optimised code to reduce size further
+ *  Removed console guff and optimised code to reduce size further, also pass $.cookie object when no args
  *	Tom Taylor - 04/06/14 - http://tommytaylor.co.uk
  * 
  *  Based on the original https://github.com/fgiasson/jquery-enhanced-cookie by Frederick Giasson (2012)
@@ -43,53 +43,66 @@
 		imp = {
 			read: {
 				storage : function(k) {
+					// If localStorage is available, we first check if there exists a value for that name.
+					// If no value exists in the localStorage, then we continue by checking in the cookies
+					// This second checkup is needed in case that a cookie has been created in the past, 
+					// using the old cookie jQuery plugin.
 					if (g.ls||g.ss) {
 						var cs = (k in g.ls? g.ls : (k in g.ss ? g.ss : 0));
 						if (cs) {
 							s.v = cs.getItem(decode(k))
 							if (s.v !== s.u && s.v !== null) {
-								return(starse(s.v,0)); 
+								s.v = starse(s.v,0);
+								return(s.v); 
 							}  
 						}							
 					}
 				},
 				cookie : function(k) {
 					if ((!s.st || !s.o.uls || s.st && s.o.ucc) && $.cCookie) {
+						// The user tries to get the value of a cookie
 						var v = "",
 							n = s.o.mnc;
 						for (i = 0; i < n; i++) {
+							// Check if the next chunk exists in the browser
 							v = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''));
+							// Append the value
 							if (v !== s.u) {
 								if(i === 0) {
 									s.v = "";
 								}
 								s.v += v;
 							} else {
+								// If the value is null, and we are looking at the first chunk, then
+								// it means that the cookie simply doesn't exist
 								if(i === 0) {
 									return(s.u);
 								}
 								break;
 							}
 						}
+						return(s.v);
 					}
 				}
 			},
 			add : {
 				storage : function(k, v) {
+					// If the localStorage is available, and if the user requested its usage, 
+					// then we create that value in the localStorage of the browser (and not in a cookie)
 					if (s.o.uls && s.st) {
 						s.d = starse(v,1);
 						s.st.setItem(encode(k), s.d);
 					} 
 				},
 				cookie : function(k, v) {
-					if ($.cCookie) {
+					if ($.cCookie) {// The user tries to create a new cookie
 						var vm = v.match(new RegExp(".{1,"+s.o.mcs+"}","g"));
-						if (vm !== s.u) {
+						if (vm !== s.u) {// Chunk the input content
 							var n = vm.length;
-							for (i = 0; i < n; i++) {
+							for (i = 0; i < n; i++) {// Create one cookie per chunk
 								s.d = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''), vm[i], s.o);
 							}
-						} else {
+						} else {// The value is probably a number, so we add it to a single cookie
 							s.d = $.cCookie(k, v, s.o); 
 						}      
 					} 		
@@ -97,12 +110,17 @@
 			},
 			remove : {
 				storage : function(k) {
+					// If the localStorage is available, and if the user requested its usage, then we first
+					// try to delete it from that place
 					if (s.st && k in s.st) {
 						s.st.removeItem(decode(k));
 					}
 				},
 				cookie : function(k) {
+					// Check if the user tries to delete the cookie
+					// Even if the localStore was used, we try to remove some possible old cookies - only if ucc is true in config!
 					if ((!s.st || !s.o.uls || s.st && s.o.ucc) && $.cCookie) {
+						// Delete all possible chunks for that cookie, if the first one exists
 						var o = $.extend(1, s.o, { expires: -1 }),
 							n = s.o.mnc,tc; 
 						for (i = 0; i < n; i++) {
@@ -121,7 +139,7 @@
 		config = $.enhancedCookie = function(k, v, o) {
 		
 			if (!arguments.length > 0 || $.isFunction(v)) {
-				return;
+				return $.cCookie();
 			}
 			
 			s = {};
@@ -141,6 +159,7 @@
 			
 				s.d = null;
 				
+				// Check if the user wants to create or delete a cookie.
 				if (v === null || v === s.u) {
 					imp.remove.storage(k);
 					imp.remove.cookie(k);
@@ -160,10 +179,10 @@
 			} else {// retrieve data
 			
 				s.v = null;
-			
+				
 				imp.read.storage(k);
 				imp.read.cookie(k);
-
+				
 				// Return the entire content from all the cookies that may have been used for that value.
 				return(s.v);
 			}
