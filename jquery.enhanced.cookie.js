@@ -1,9 +1,11 @@
 /**
- * jQuery Enhanced Cookie Plugin v1.2.1 (2014)
+ * jQuery Enhanced Cookie Plugin v1.2.2 (2014)
  * 
  *	Rewritten plugin to support better integration with $.cookie and $.super_cookie plugins and options
  *  Removed console guff and optimised code to reduce size further, also pass $.cookie object when no args
- *	Tom Taylor - 04/06/14 - http://tommytaylor.co.uk
+ *  Should now return 'undefined' if cookie or local/sessionStorage key doesn't exist, same behaviour as $.cookie
+ *
+ *	Tom Taylor - 03/07/14 - http://tommytaylor.co.uk
  * 
  *  Based on the original https://github.com/fgiasson/jquery-enhanced-cookie by Frederick Giasson (2012)
  *  Most if not all of this version of the plugin should be backwards compatable! (*maybe)
@@ -29,6 +31,7 @@
 			ls: 0, 
 			ss: 0, 
 			jse: w.JSON && w.JSON.parse, 
+			n: null,
 			u: undefined
 		},
 		encode = function(s) {
@@ -48,13 +51,15 @@
 					// This second checkup is needed in case that a cookie has been created in the past, 
 					// using the old cookie jQuery plugin.
 					if (g.ls||g.ss) {
-						var cs = (k in g.ls? g.ls : (k in g.ss ? g.ss : 0));
+						var cs = (k in g.ls ? g.ls : (k in g.ss ? g.ss : 0));
 						if (cs) {
 							s.v = cs.getItem(decode(k))
-							if (s.v !== s.u && s.v !== null) {
+							if (s.v !== g.u && s.v !== g.n) {
 								s.v = starse(s.v,0);
-								return(s.v); 
-							}  
+							} else {
+								s.v = g.u;
+							}
+							return(s.v); 
 						}							
 					}
 				},
@@ -67,7 +72,7 @@
 							// Check if the next chunk exists in the browser
 							v = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''));
 							// Append the value
-							if (v !== s.u) {
+							if (v !== g.u) {
 								if(i === 0) {
 									s.v = "";
 								}
@@ -75,8 +80,10 @@
 							} else {
 								// If the value is null, and we are looking at the first chunk, then
 								// it means that the cookie simply doesn't exist
-								if(i === 0) {
-									return(s.u);
+								if(i === 0 && s.v !== g.u) {
+									if(s.v === g.n || s.v.length === 0) {
+										s.v = g.u;
+									}
 								}
 								break;
 							}
@@ -97,7 +104,7 @@
 				cookie : function(k, v) {
 					if ($.cCookie) {// The user tries to create a new cookie
 						var vm = v.match(new RegExp(".{1,"+s.o.mcs+"}","g"));
-						if (vm !== s.u) {// Chunk the input content
+						if (vm !== g.u) {// Chunk the input content
 							var n = vm.length;
 							for (i = 0; i < n; i++) {// Create one cookie per chunk
 								s.d = $.cCookie(k + (i !== 0 ? s.o.cpf + i : ''), vm[i], s.o);
@@ -126,8 +133,8 @@
 						for (i = 0; i < n; i++) {
 							tc = k + (i !== 0 ? o.cpf + i : '');
 							
-							if ($.cCookie(tc) !== s.u) {
-								$.cCookie(tc, null, o);
+							if ($.cCookie(tc) !== g.u) {
+								$.cCookie(tc, g.n, o);
 							} else {
 								break;
 							}
@@ -144,23 +151,21 @@
 			
 			s = {};
 			
-			s.u = g.u;
-			
-			if (o === s.u && v !== s.u) {
+			if (o === g.u && v !== g.u) {
 				o = v;
 			}
 
 			s.o = $.extend({}, config.defaults, $.extend(1, config.options, $.extend(1, config, o))) || {}; //get default options, and set overrides
 			
-			s.st = (s.o.expires !== s.u ? g.ls : g.ss); //switch local storage type, regardless of state
+			s.st = (s.o.expires !== g.u ? g.ls : g.ss); //switch local storage type, regardless of state
 
 			
-			if (String(v) !== "[object Object]" && v !== s.u) {// set or remove data
+			if (String(v) !== "[object Object]" && v !== g.u) {// set or remove data
 			
-				s.d = null;
+				s.d = g.n;
 				
 				// Check if the user wants to create or delete a cookie.
-				if (v === null || v === s.u) {
+				if (v === g.n || v === g.u) {
 					imp.remove.storage(k);
 					imp.remove.cookie(k);
 				} else {
@@ -178,7 +183,7 @@
 				
 			} else {// retrieve data
 			
-				s.v = null;
+				s.v = g.u;
 				
 				imp.read.storage(k);
 				imp.read.cookie(k);
@@ -210,7 +215,7 @@
 		for (i = 0; i < l; i++) {
 			o = s[i];
 			r = o.n+"Storage";
-			if (!g[o.t] && r in w) {
+			if (!g[o.t] && r in w && typeof(Storage) !== g.u) {
 				try {
 					ts = w[r]; //lets reuse init of localStorage :)
 					ts.setItem(r, 1);
