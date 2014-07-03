@@ -1,4 +1,4 @@
- jQuery Extended Cookie Plugin v1.2.1 (2014)
+ jQuery Extended Cookie Plugin v1.2.2 (2014)
 ============
 
 Rewritten plugin to support better integration with $.cookie and $.super_cookie plugins and options
@@ -7,8 +7,10 @@ Removed console guff and optimised code to reduce size further
 
 Included minified version for those who want to use it right now
 
+Should now return 'undefined' if cookie or local/sessionStorage key doesn't exist, same behaviour as $.cookie
+
  
-Tom Taylor - 04/06/14 - http://tommytaylor.co.uk
+Tom Taylor - 03/07/14 - http://tommytaylor.co.uk
 
 
 *Based on the original https://github.com/fgiasson/jquery-enhanced-cookie by Frederick Giasson (2012)
